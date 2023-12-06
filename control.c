@@ -1,54 +1,142 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include <ctype.h>
 #include <string.h>
 
-char *currdb = NULL;
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
 
-int alterdb(char *db, int option){
-  FILE *fp;
-  switch (option){
-    case 0:
-      fp = fopen(db, "r");
-      currdb = db;
-      break;
-    case 1:
-      fp = fopen(db, "w");
-      break;
-  } 
- 
-  if(fp == NULL){
-    return 1;
+#include <unistd.h>
+
+#include <linux/limits.h>
+
+DIR *currdb = NULL;
+char root[PATH_MAX];
+char cdb[PATH_MAX];
+
+int closedb(){
+  if(currdb != NULL){
+    closedir(currdb);
+    return 0;
   }
 
-  fclose(fp);
+  return 1;
+}
+
+int indir(char *d, char *c){
+  DIR *dir = opendir(d);
+  struct dirent *dp;
+
+  while((dp = readdir(dir)) != NULL){
+    if(strcmp(dp->d_name, c) == 0){
+      closedir(dir);
+      return 1;
+    }
+  }
+
+  closedir(dir);
+  return 0;
+}
+
+int usedb(char *db){
+  if(indir(".", db) == 0){
+    if(mkdir(db, 0755) != 0){
+      perror("could not make directory");
+      return 1;
+    }
+  }
+
+  if((currdb = opendir(db)) == NULL){
+    perror("could not open directory");
+    return 1;
+  }  
+
+  strcpy(cdb, db);
   return 0;
 }
 
 int create(char *table){
   if(currdb == NULL){
     perror("no db open");
-    return 1;  
+    return -1;  
   }
 
-  FILE *fp;
-  fp = fopen(currdb, "w+");
-  fprintf(fp, "%s\n", table);
+  if(indir(cdb, table) == 1)
+    return 2;
+
+  char pathbuf[PATH_MAX];
+  sprintf(pathbuf, "%s/%s", cdb, table);
+  FILE *fp = fopen(pathbuf, "w");
   fclose(fp);
-  
-  fp = fopen(table, "w+");
-  fclose(fp);
-  
+
   return 0;  
 }
 
-int main(int argc, char **argv){
-  //-->parse to verify SQL command
-  //handle I/O to create/write/delete table/to table --> handle db as folder? 
-  //add efficiency logic for file storage and I/O operations
-  //profit??
+int deletedb(char *db){
+  if(currdb == NULL)
+    return 1;
+  
+  struct dirent *dp;
+  DIR *rootdirp = opendir(cdb);
+  while((dp = readdir(rootdirp)) != NULL){
+    if(dp->d_name[0] != '.' && dp->d_type == DT_DIR){
+      if(strcmp(dp->d_name, db) == 0){
+        char pbuf[PATH_MAX];
+        sprintf(pbuf, "%s/%s", cdb, db);
+        rmdir(pbuf);
+        closedir(rootdirp);
+        return 0;
+      }
+    }
+  }
 
-  alterdb("testdb", 0); 
-  create("table"); 
+  closedir(rootdirp);
+  return 1;
+}
+
+int lsdb(char *dir, int d){
+  DIR *rdirp = opendir(dir);
+  struct dirent *dp;
+  while((dp = readdir(rdirp)) != NULL){
+    if(dp->d_type == DT_DIR && dp->d_name[0] != '.'){
+      for(int i = 0; i < d; i++){
+        printf("\t");
+      }
+      printf("%s\n", dp->d_name);
+      char p[PATH_MAX];
+      sprintf(p, "%s/%s", dir, dp->d_name);
+      lsdb(p, d+1);
+    }
+  }
+
+  return 0;
+}
+
+int main(int argc, char **argv){
+  getcwd(root, PATH_MAX);
+  
+  lsdb(root, 0);
+
+  // if(usedb("testdb") == 1){
+  //   fflush(stderr);
+  //   return 1;
+  // }
+  
+  // if(create("table") == -1){
+  //   fflush(stderr);
+  //   return 1;
+  // }
+
+  //deletedb("fake");
+  
+  
+  closedb();
+
+  /* HAS: make, create table, delete, close
+     NEEDS: 
+      store data --> column (table metadata for columns)
+      copy commands
+      interactive view
+      better directory management
+  */
 }

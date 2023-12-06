@@ -1,2 +1,3 @@
 # DB
-- a db
+- plaintext db
+

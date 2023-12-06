@@ -10,6 +10,8 @@
 
 #include <linux/limits.h>
 
+#define INPUT_SIZE 10
+
 DIR *currdb = NULL;
 char root[PATH_MAX];
 char cdb[PATH_MAX];
@@ -112,10 +114,51 @@ int lsdb(char *dir, int d){
   return 0;
 }
 
+void prompt(){
+  if(currdb == NULL)
+    printf("Current Databse: <None Selected>\n");
+  else
+    printf("Current Database: %s\n", cdb);
+
+  printf("Enter one of the following options:\n"
+         "\tUse database: <s>\n"
+         "\tQuit Program <e>\n");
+
+  return;
+}
+
+void db_input(){
+  size_t len = INPUT_SIZE;
+  char **dbe = NULL;
+  printf("Enter the db name: ");
+  getline(dbe, &len, stdin);
+  // for(int i = 0; i < INPUT_SIZE; i++){
+  //   printf("Entered: %s\n", dbe[i]);
+  // }
+}
+
 int main(int argc, char **argv){
   getcwd(root, PATH_MAX);
-  
-  lsdb(root, 0);
+
+  char c;
+  while(1){
+    prompt();
+    c = getchar();
+    if(c == 's'){
+      db_input();
+    }
+    else if(c == 'e'){
+      closedb();
+      break;
+    }
+    else{
+      printf("invalid input\n");
+    }
+
+    while(getchar() != '\n');
+  }
+
+  // lsdb(root, 0);
 
   // if(usedb("testdb") == 1){
   //   fflush(stderr);

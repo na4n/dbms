@@ -1,0 +1,6 @@
+*/.vscode/*
+*.swp
+*.tmp
+*.out
+vgcore.*
+

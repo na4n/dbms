@@ -1,20 +1,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int create(char *void){
-  
+#include "file.h"
+
+int create(char *name){
+  FILE *fp;
+  if((fp = fopen(name, "w")) == NULL){
+    perror("failed to make db");
+    return 1;
+  }
+
+  fclose(fp);
+  return 0;
 }
 
 int main(int argc, char **argv){
-  if(argc <= 2){
+  if(argc < 2){
     printf("Usage: ./db.c <database>\n");
-    return 1;
-  }
-  FILE *fp;
-  if((fp = fopen("db")) == NULL){
-    printf("DB doesn't exist\n");
+    printf("\t- subsequent arguments will be ignored\n");
     return 1;
   }
 
+  if(indir(".", argv[1], DT_REG) == 0){
+    if(create(argv[1]) == 1){
+      return 1;
+    }
+  }
+    
   return 0;
 }

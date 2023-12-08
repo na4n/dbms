@@ -6,6 +6,7 @@
 
 const float VERSION = 0.01;
 const int TUPLE_MAX = 10;
+const int PAGE_SIZE = 4096;
 
 phead gethead(char *pname){
   phead p = PAGE_HEAD_INITIALIZER;
@@ -15,39 +16,38 @@ phead gethead(char *pname){
     return p;
   }
 
-  char buf[sizeof(phead)];
-  fread(buf, sizeof(char), sizeof(phead), fp);
+  fread(&p, sizeof(char), sizeof(phead), fp);
   fclose(fp);
-  memcpy(&p, buf, sizeof(phead));
   return p;
 }
 
-int hdwrte(char *pname, phead *p){
+int hdwrite(char *pname, phead *p){
   FILE *fp;
-  if((fp = fopen(pname, "w")) == NULL){
+  if((fp = fopen(pname, "r+")) == NULL){
     return 1;
   }
 
-  char buf[sizeof(phead)];
-  memcpy(buf, p, sizeof(phead));
-  fwrite(buf, sizeof(phead), 1, fp);
+  fwrite(p, sizeof(phead), 1, fp);
   fclose(fp);
-
   return 0;
 }
 
 int init(char *pname){
   FILE *fp;
+  
   if((fp = fopen(pname, "r")) != NULL){
+    fclose(fp);
     return 2;
   }
 
-  phead p = {.tupct=0, .ver=VERSION, .nfree=4096};
-  if(hdwrte(pname, &p) == 1){
+  if((fp = fopen(pname, "w+")) == NULL){
+    printf("failed to open\n");
     return 1;
   }
+  fclose(fp);
 
-  return 0;
+  phead p = {.tupct=0, .ver=VERSION, .nfree=PAGE_SIZE};
+  return hdwrite(pname, &p);
 }
 
   //update header
@@ -75,7 +75,7 @@ int add(char *pname, char *fmt, void **arg) {
       l += asize;
     }
     else if(fmt[j] == 's'){
-      asize = strlen(*(char **)arg[j]) + 1; // +1 for null terminator
+      asize = strlen(*(char **)arg[j]) + 1;
       buf = realloc(buf, l + asize);
       memcpy(buf + l, *(char **)arg[j], asize);
       l += asize;
@@ -92,38 +92,37 @@ int add(char *pname, char *fmt, void **arg) {
     return 2;
   }
 
-  
+  //write new head                                                //MEGA PROBLEM: all three writes must happen or none happen
+  if(hdwrite(pname, &p) == 1){
+    return 1;
+  }
 
-  //write new head
   //write tuple head with offset
+  FILE *fp;
+  if((fp = fopen(pname, "r+")) == NULL){
+    return 1;
+  }
+
+  thead t = {.fmt=*fmt, .loc=p.nfree};
+  fseek(fp, nexthead_end-sizeof(thead), SEEK_SET);
+  fwrite(&t, sizeof(thead), 1, fp);
+
   //write tuple at offset
+  fseek(fp, p.nfree, SEEK_SET);
+  fwrite(buf, sizeof(buf), 1, fp);
 
-  // FILE *fp;
-  // if((fp = fopen(pname, "a")) == NULL){
-  //   return 1;
-  // }
-
-  // thead t = {.fmt=fmt, .loc=10};
-  // if(fseek(fp, sizeof(p), SEEK_SET) != 0){
-  //   fclose(fp);
-  //   return 1;
-  // }
-
-  // fwrite(&t, 1, sizeof(thead), fp);
-  // fclose(fp);
+  fclose(fp);
   
   free(buf);
   return 0;
 }
 
 int main(int argc, char **argv){
-  if(init("test") == 2){
-    printf("\'test\' already exists\n");
-  }
-
-  if(argc == 1){
+  if(argc == 1)
     return 0;
-  }
+
+  if(init("test") == 2)
+    printf("specified db already exists\n");
 
   if(strcmp(argv[1], "add") == 0){
     if(argc > TUPLE_MAX+2){

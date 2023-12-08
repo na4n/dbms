@@ -37,6 +37,11 @@ int hdwrte(char *pname, phead *p){
 }
 
 int init(char *pname){
+  FILE *fp;
+  if((fp = fopen(pname, "r")) != NULL){
+    return 2;
+  }
+
   phead p = {.tupct=0, .ver=VERSION, .nfree=4096};
   if(hdwrte(pname, &p) == 1){
     return 1;
@@ -51,23 +56,25 @@ int init(char *pname){
   //  check if sufficient space
   //  insert if so and return 0, otherwise return 1
 
-int add(char *fname, char *fmt, void **arg) {
+int add(char *pname, char *fmt, void **arg) {
   void *buf = NULL;
   int l = 0;
   int asize;
 
   for (int j = 0; j < strlen(fmt); j++) {
-    if (fmt[j] == 'f') {
+    if(fmt[j] == 'f'){
       asize = sizeof(double);
       buf = realloc(buf, l + asize);
       memcpy(buf + l, (double *)arg[j], asize);
       l += asize;
-    } else if (fmt[j] == 'l') {
+    } 
+    else if(fmt[j] == 'l'){
       asize = sizeof(long);
       buf = realloc(buf, l + asize);
       memcpy(buf + l, (long *)arg[j], asize);
       l += asize;
-    } else if (fmt[j] == 's') {
+    }
+    else if(fmt[j] == 's'){
       asize = strlen(*(char **)arg[j]) + 1; // +1 for null terminator
       buf = realloc(buf, l + asize);
       memcpy(buf + l, *(char **)arg[j], asize);
@@ -75,53 +82,45 @@ int add(char *fname, char *fmt, void **arg) {
     }
   }
 
-  // double *d = malloc(sizeof(double));
-  // long *a = malloc(sizeof(long));
-  // char *s = malloc(100);
-  // int loc = 0;
+  phead p = gethead(pname);
+  p.tupct += 1;
+  p.nfree -= asize;
 
-  // for (int i = 0; i < strlen(fmt); i++) {
-  //   if (fmt[i] == 'f') {
-  //     memcpy(d, buf + loc, sizeof(double));
-  //     loc += sizeof(double);
-  //     printf("Argument %d: %f\n", i, *d);
-  //   } else if (fmt[i] == 'l') {
-  //     memcpy(a, buf + loc, sizeof(long));
-  //     loc += sizeof(long);
-  //     printf("Argument %d: %ld\n", i, *a);
-  //   } else if (fmt[i] == 's') {
-  //     strcpy(s, buf + loc);
-  //     loc += strlen(s) + 1; // +1 for null terminator
-  //     printf("Argument %d: %s\n", i, s);
-  //   }
-  // }
+  int nexthead_end = sizeof(phead) + ((p.tupct) * (sizeof(thead)));
+  int nexttuple_end = p.nfree;
+  if(nexthead_end >= nexttuple_end){
+    return 2;
+  }
 
-  // free(d);
-  // free(a);
-  // free(s);
-  free(buf);
+  
 
-  // int c = 10 - strlen(fmt);
-  // for(int i = 0 ; i < c; i++){
-  //   strcat(fmt, "0");
-  // }
+  //write new head
+  //write tuple head with offset
+  //write tuple at offset
 
-  // phead p = gethead(fname);
-  // if(p.tupct == -1 && p.ver == -1 && p.nfree == -1){
+  // FILE *fp;
+  // if((fp = fopen(pname, "a")) == NULL){
   //   return 1;
   // }
+
+  // thead t = {.fmt=fmt, .loc=10};
+  // if(fseek(fp, sizeof(p), SEEK_SET) != 0){
+  //   fclose(fp);
+  //   return 1;
+  // }
+
+  // fwrite(&t, 1, sizeof(thead), fp);
+  // fclose(fp);
   
-  // int hloc = sizeof(phead) + 10 * p.tupct;
-
-  // printf("argument: %s\n", fmt);
-  // return 1;  
-
+  free(buf);
   return 0;
 }
 
 int main(int argc, char **argv){
-  //init("test");
-  //add("test");
+  if(init("test") == 2){
+    printf("\'test\' already exists\n");
+  }
+
   if(argc == 1){
     return 0;
   }
@@ -163,3 +162,28 @@ int main(int argc, char **argv){
 
   return 0;
 }
+
+  // double *d = malloc(sizeof(double));
+  // long *a = malloc(sizeof(long));
+  // char *s = malloc(100);
+  // int loc = 0;
+
+  // for (int i = 0; i < strlen(fmt); i++) {
+  //   if (fmt[i] == 'f') {
+  //     memcpy(d, buf + loc, sizeof(double));
+  //     loc += sizeof(double);
+  //     printf("Argument %d: %f\n", i, *d);
+  //   } else if (fmt[i] == 'l') {
+  //     memcpy(a, buf + loc, sizeof(long));
+  //     loc += sizeof(long);
+  //     printf("Argument %d: %ld\n", i, *a);
+  //   } else if (fmt[i] == 's') {
+  //     strcpy(s, buf + loc);
+  //     loc += strlen(s) + 1; // +1 for null terminator
+  //     printf("Argument %d: %s\n", i, s);
+  //   }
+  // }
+
+  // free(d);
+  // free(a);
+  // free(s);

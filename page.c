@@ -7,40 +7,43 @@
 const float VERSION = 0.01;
 const int TUPLE_MAX = 10;
 
-p_head* gethead(char *pname){
+phead gethead(char *pname){
+  phead p = PAGE_HEAD_INITIALIZER;
+
   FILE *fp;
   if((fp = fopen(pname, "r")) == NULL){
-    return NULL;
+    return p;
   }
 
-  char buf[sizeof(p_head)];
-  p_head *p = malloc(sizeof(p_head));
-  fread(buf, sizeof(char), sizeof(p_head), fp);
+  char buf[sizeof(phead)];
+  fread(buf, sizeof(char), sizeof(phead), fp);
   fclose(fp);
-  memcpy(p, buf, sizeof(p_head));
+  memcpy(&p, buf, sizeof(phead));
   return p;
 }
 
-int init(char *pname){
-  p_head p = {.tupct=0, .ver=VERSION, .nfree=4096};
-  char buf[sizeof(p_head)];
-  memcpy(buf, &p, sizeof(p_head));
-  
+int hdwrte(char *pname, phead *p){
   FILE *fp;
   if((fp = fopen(pname, "w")) == NULL){
     return 1;
   }
-  fwrite(buf, sizeof(p_head), 1, fp);
+
+  char buf[sizeof(phead)];
+  memcpy(buf, p, sizeof(phead));
+  fwrite(buf, sizeof(phead), 1, fp);
   fclose(fp);
 
   return 0;
 }
 
-int add(char *fmt, void **arg){
-  int c = 10 - strlen(fmt);
-  for(int i = 0 ; i < c; i++){
-    strcat(fmt, "0");
+int init(char *pname){
+  phead p = {.tupct=0, .ver=VERSION, .nfree=4096};
+  if(hdwrte(pname, &p) == 1){
+    return 1;
   }
+
+  return 0;
+}
 
   //update header
   //  calculate next header pointer location
@@ -48,20 +51,72 @@ int add(char *fmt, void **arg){
   //  check if sufficient space
   //  insert if so and return 0, otherwise return 1
 
-  for(int j = 0; j < strlen(fmt); j++){
-    if(fmt[j] == 'f'){
-      printf("%f\n", *(double*) arg[j]);
-    }
-    else if(fmt[j] == 'l'){
-      printf("%ld\n", *(long*) arg[j]);
-    }
-    else if (fmt[j] == 's'){
-      printf("%s\n", *(char**) arg[j]);
+int add(char *fname, char *fmt, void **arg) {
+  void *buf = NULL;
+  int l = 0;
+  int asize;
+
+  for (int j = 0; j < strlen(fmt); j++) {
+    if (fmt[j] == 'f') {
+      asize = sizeof(double);
+      buf = realloc(buf, l + asize);
+      memcpy(buf + l, (double *)arg[j], asize);
+      l += asize;
+    } else if (fmt[j] == 'l') {
+      asize = sizeof(long);
+      buf = realloc(buf, l + asize);
+      memcpy(buf + l, (long *)arg[j], asize);
+      l += asize;
+    } else if (fmt[j] == 's') {
+      asize = strlen(*(char **)arg[j]) + 1; // +1 for null terminator
+      buf = realloc(buf, l + asize);
+      memcpy(buf + l, *(char **)arg[j], asize);
+      l += asize;
     }
   }
- 
-  printf("argument: %s\n", fmt);
-  return 1;  
+
+  // double *d = malloc(sizeof(double));
+  // long *a = malloc(sizeof(long));
+  // char *s = malloc(100);
+  // int loc = 0;
+
+  // for (int i = 0; i < strlen(fmt); i++) {
+  //   if (fmt[i] == 'f') {
+  //     memcpy(d, buf + loc, sizeof(double));
+  //     loc += sizeof(double);
+  //     printf("Argument %d: %f\n", i, *d);
+  //   } else if (fmt[i] == 'l') {
+  //     memcpy(a, buf + loc, sizeof(long));
+  //     loc += sizeof(long);
+  //     printf("Argument %d: %ld\n", i, *a);
+  //   } else if (fmt[i] == 's') {
+  //     strcpy(s, buf + loc);
+  //     loc += strlen(s) + 1; // +1 for null terminator
+  //     printf("Argument %d: %s\n", i, s);
+  //   }
+  // }
+
+  // free(d);
+  // free(a);
+  // free(s);
+  free(buf);
+
+  // int c = 10 - strlen(fmt);
+  // for(int i = 0 ; i < c; i++){
+  //   strcat(fmt, "0");
+  // }
+
+  // phead p = gethead(fname);
+  // if(p.tupct == -1 && p.ver == -1 && p.nfree == -1){
+  //   return 1;
+  // }
+  
+  // int hloc = sizeof(phead) + 10 * p.tupct;
+
+  // printf("argument: %s\n", fmt);
+  // return 1;  
+
+  return 0;
 }
 
 int main(int argc, char **argv){
@@ -98,7 +153,7 @@ int main(int argc, char **argv){
       }
     }
 
-    add(argfrmt, buf);
+    add("test", argfrmt, buf);
 
     for(int i = 0; i < argc-2; i++){
       free(buf[i]);

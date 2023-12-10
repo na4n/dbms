@@ -50,12 +50,6 @@ int init(char *pname){
   return hdwrite(pname, &p);
 }
 
-  //update header
-  //  calculate next header pointer location
-  //  calculate next insert location (add arg sizes)
-  //  check if sufficient space
-  //  insert if so and return 0, otherwise return 1
-
 int add(char *pname, char *fmt, void **arg) {
   void *buf = NULL;
   int l = 0;
@@ -82,18 +76,24 @@ int add(char *pname, char *fmt, void **arg) {
     }
   }
 
+
   phead p = gethead(pname);
   p.tupct += 1;
-  p.nfree -= asize;
+  p.nfree -= l;
 
   int nexthead_end = sizeof(phead) + ((p.tupct) * (sizeof(thead)));
   int nexttuple_end = p.nfree;
+
   if(nexthead_end >= nexttuple_end){
+    printf("terminating condition is met\n");
     return 2;
   }
 
-  //write new head                                                //MEGA PROBLEM: all three writes must happen or none happen
-  if(hdwrite(pname, &p) == 1){
+  printf("adding %s ", fmt);
+  printf("with size %d\n", l);
+
+  //write new head
+  if(hdwrite(pname, &p) == 1){ //MEGA PROBLEM: all three writes must happen or none happen
     return 1;
   }
 
@@ -103,13 +103,14 @@ int add(char *pname, char *fmt, void **arg) {
     return 1;
   }
 
-  thead t = {.fmt=*fmt, .loc=p.nfree};
+  thead t = {.fmt="", .loc=p.nfree, .tsize=l};
+  strcpy(t.fmt, fmt);
   fseek(fp, nexthead_end-sizeof(thead), SEEK_SET);
   fwrite(&t, sizeof(thead), 1, fp);
 
   //write tuple at offset
   fseek(fp, p.nfree, SEEK_SET);
-  fwrite(buf, sizeof(buf), 1, fp);
+  fwrite(buf, l, 1, fp);
 
   fclose(fp);
   
@@ -118,22 +119,86 @@ int add(char *pname, char *fmt, void **arg) {
 }
 
 int decode(char *pname, int t){ //returns tuple t in page pname
+  phead p = gethead(pname);
+  if(p.tupct == -1 || p.ver == -1 || p.nfree == -1){
+    return 1;
+  }
+  
+  if(t > p.tupct || t <= 0){
+    return 1;
+  }
+
   FILE *fp;
   if((fp = fopen(pname, "r")) == NULL){
     return 1;
   }
 
-  fclose(fp);
+  int theadloc = sizeof(phead) + ((t-1) * sizeof(thead));
+  fseek(fp, theadloc, SEEK_SET);
+
+  thead th;
+  fread(&th, sizeof(thead), 1, fp);
+  printf("format: %s\nlocation: %d\ntsize: %d\n\n", th.fmt, th.loc, th.tsize);
+
+  char buf[th.tsize];
+  fseek(fp, th.loc, SEEK_SET);
+  fread(buf, th.tsize, 1, fp);
+
+  // char out[th.tsize+3];
+  // strcat(out, "{");
+
+  int bufloc = 0;
+  // int outloc = 1;
+  for(int i = 0; i < strlen(th.fmt); i++){
+    if(th.fmt[i] == 'l'){
+      long longch;
+      memcpy(&longch, buf+bufloc, sizeof(long));
+      bufloc += sizeof(long);
+      printf("found a long in %s: %ld\n", th.fmt, longch);
+    }
+    else if(th.fmt[i] == 'f'){
+      double floatch;
+      memcpy(&floatch, buf+bufloc, sizeof(double));
+      bufloc += sizeof(double);
+      printf("found a double in %s: %f\n", th.fmt, floatch);
+    }
+    else if(th.fmt[i] == 's'){
+      char *strng = NULL;
+      int j = 0;
+      while(1){
+        if(*(buf+bufloc) != '\0'){
+          strng = realloc(strng, j+1);
+          strng[j] = *(buf+bufloc);
+          j++;
+          bufloc++;
+        }
+        else{
+          strng = realloc(strng, j+1);
+          strng[j] = *(buf+bufloc);
+          j++;
+          bufloc++;
+          break;
+        }
+      }
+      printf("found a string in %s: %s\n", th.fmt, strng);
+      free(strng);
+      continue;
+    }
+  }
+  strcat(buf, "}");
+
   return 0;
 }
 
 int main(int argc, char **argv){
-  if(argc == 1)
+  if(argc == 1){
+    decode("test", 2);
+    //decode("test", 2);
     return 0;
+  }
 
-  if(init("test") == 2)
-    printf("specified db already exists\n");
-
+  init("test");
+  
   if(strcmp(argv[1], "add") == 0){
     if(argc > TUPLE_MAX+2){
       perror("too many arguments");

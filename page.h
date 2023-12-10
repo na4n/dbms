@@ -1,5 +1,6 @@
 #ifndef PAGE_H
 #define PAGE_H
+
 struct page_header{
   int tupct;
   float ver;
@@ -9,6 +10,7 @@ struct page_header{
 struct tuple_header{
   char fmt[10];
   int loc;
+  int tsize;
 } typedef thead;
 
 phead PAGE_HEAD_INITIALIZER = {.tupct=-1, .ver=-1, .nfree=-1};

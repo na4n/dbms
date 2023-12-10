@@ -117,6 +117,16 @@ int add(char *pname, char *fmt, void **arg) {
   return 0;
 }
 
+int decode(char *pname, int t){ //returns tuple t in page pname
+  FILE *fp;
+  if((fp = fopen(pname, "r")) == NULL){
+    return 1;
+  }
+
+  fclose(fp);
+  return 0;
+}
+
 int main(int argc, char **argv){
   if(argc == 1)
     return 0;

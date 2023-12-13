@@ -190,6 +190,33 @@ int decode(char *pname, int t){ //returns tuple t in page pname
   return 0;
 }
 
+int remove(char *pname, int t){
+  FILE *fp;
+  if(fp = fopen(pname, "r") == NULL){
+    return 1;
+  }
+  phead p;
+  fread(&p, 1, sizeof(phead), fp);
+
+  if(t > p.tupct || t < 0){
+    return 1;
+  }
+  
+  int thead_loc = sizeof(phead) + (t-1) * sizeof(thead);
+  thead t;
+  fseek(fp, thead_loc, SEEK_SET);
+  fread(&t, 1, sizeof(thead), fp);
+
+  //fseek(fp, t.loc, SEEK_SET);   //delete data, rewrite others, update tuple pointers in database
+  // char buf[]
+
+  return 1;
+}
+
+int garbage_collect(char *pname){
+
+}
+
 int main(int argc, char **argv){
   if(argc == 1){
     decode("test", 2);

@@ -2,11 +2,28 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "page.h"
+//#include "page.h"
+
+
 
 const float VERSION = 0.01;
 const int TUPLE_MAX = 10;
 const int PAGE_SIZE = 4096;
+
+struct page_header{
+  int tupct;
+  float ver;
+  int nfree;
+} typedef phead;
+
+struct tuple_header{
+  char fmt[10];
+  int loc;
+  int tsize;
+} typedef thead;
+
+phead PAGE_HEAD_INITIALIZER = {.tupct=-1, .ver=-1, .nfree=-1};
+
 
 phead gethead(char *pname){
   phead p = PAGE_HEAD_INITIALIZER;
@@ -190,19 +207,19 @@ int decode(char *pname, int t){ //returns tuple t in page pname
   return 0;
 }
 
-int remove(char *pname, int t){
+int removetuple(char *pname, int n){
   FILE *fp;
-  if(fp = fopen(pname, "r") == NULL){
+  if((fp = fopen(pname, "r")) == NULL){
     return 1;
   }
   phead p;
   fread(&p, 1, sizeof(phead), fp);
 
-  if(t > p.tupct || t < 0){
+  if(n > p.tupct || n < 0){
     return 1;
   }
   
-  int thead_loc = sizeof(phead) + (t-1) * sizeof(thead);
+  int thead_loc = sizeof(phead) + (n-1) * sizeof(thead);
   thead t;
   fseek(fp, thead_loc, SEEK_SET);
   fread(&t, 1, sizeof(thead), fp);
@@ -213,9 +230,9 @@ int remove(char *pname, int t){
   return 1;
 }
 
-int garbage_collect(char *pname){
+// int garbage_collect(char *pname){
 
-}
+// }
 
 int main(int argc, char **argv){
   if(argc == 1){

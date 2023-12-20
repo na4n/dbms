@@ -160,7 +160,6 @@ int decode(char *pname, int t){ //returns tuple t in page pname
   char buf[th.tsize];
   fseek(fp, th.loc, SEEK_SET);
   fread(buf, th.tsize, 1, fp);
-
   // char out[th.tsize+3];
   // strcat(out, "{");
 
@@ -207,7 +206,10 @@ int decode(char *pname, int t){ //returns tuple t in page pname
   return 0;
 }
 
-int removetuple(char *pname, int n){
+int removetuple(char *pname, int n){  //implement this
+  return 1;
+  
+  
   FILE *fp;
   if((fp = fopen(pname, "r")) == NULL){
     return 1;
@@ -224,9 +226,10 @@ int removetuple(char *pname, int n){
   fseek(fp, thead_loc, SEEK_SET);
   fread(&t, 1, sizeof(thead), fp);
 
-  //fseek(fp, t.loc, SEEK_SET);   //delete data, rewrite others, update tuple pointers in database
-  // char buf[]
-
+  fseek(fp, t.loc, SEEK_SET);   //delete data, rewrite others, update tuple pointers in database
+  char buf[t.tsize];
+  
+  fclose(fp);
   return 1;
 }
 
@@ -235,8 +238,8 @@ int removetuple(char *pname, int n){
 // }
 
 int main(int argc, char **argv){
-  if(argc == 1){
-    decode("test", 2);
+  if(argc == 1){ //test case
+    //decode("test", 1);
     //decode("test", 2);
     return 0;
   }
@@ -277,31 +280,12 @@ int main(int argc, char **argv){
     }
     free(buf);
   }
+  else if(strcmp(argv[1], "decode") == 0){
+    if(!(argc >= 4 && (atoi(argv[3]) != 0 || strcmp(argv[3], "0") == 0))){
+      return 1;
+    }
+    decode(argv[2], atoi(argv[3]));
+  }
 
   return 0;
 }
-
-  // double *d = malloc(sizeof(double));
-  // long *a = malloc(sizeof(long));
-  // char *s = malloc(100);
-  // int loc = 0;
-
-  // for (int i = 0; i < strlen(fmt); i++) {
-  //   if (fmt[i] == 'f') {
-  //     memcpy(d, buf + loc, sizeof(double));
-  //     loc += sizeof(double);
-  //     printf("Argument %d: %f\n", i, *d);
-  //   } else if (fmt[i] == 'l') {
-  //     memcpy(a, buf + loc, sizeof(long));
-  //     loc += sizeof(long);
-  //     printf("Argument %d: %ld\n", i, *a);
-  //   } else if (fmt[i] == 's') {
-  //     strcpy(s, buf + loc);
-  //     loc += strlen(s) + 1; // +1 for null terminator
-  //     printf("Argument %d: %s\n", i, s);
-  //   }
-  // }
-
-  // free(d);
-  // free(a);
-  // free(s);

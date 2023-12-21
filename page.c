@@ -203,31 +203,43 @@ int tuple_decode(char *pname, int t){
   return 0;
 }
 
-// int tuple_remove(char *pname, int n){
-//   FILE *fp = fopen(pname, "r");
-//   if(fp == NULL){
-//     return 1;
-//   }
+int tuple_remove(char *pname, int n){
+  FILE *fp = fopen(pname, "r");
+  if(fp == NULL){
+    return 1;
+  }
 
-//   phead p = phead_ret(pname);
-//   printf("file has %d tuples\n", p.tupct);
-//   if(n > p.tupct || n <= 0){
-//     fclose(fp);
-//     return 1;
-//   }
+  phead p = phead_ret(pname);
+  printf("file has %d tuples\n", p.tupct);
+  if(n > p.tupct || n <= 0){
+    fclose(fp);
+    return 1;
+  }
   
-//   thead t;
-//   fseek(fp, (n-1)*sizeof(thead)+sizeof(phead), SEEK_SET);
-//   fread(&t, 1, sizeof(thead), fp);
+  thead t;
+  fseek(fp, (n-1)*sizeof(thead)+sizeof(phead), SEEK_SET);
+  fread(&t, 1, sizeof(thead), fp);
 
-//   printf("format: %s\nloc: %d\nsize: %d\n", t.fmt, t.loc, t.tsize); //FP is not at 0 at this point
+  printf("format: %s\nloc: %d\nsize: %d\n", t.fmt, t.loc, t.tsize); //FP is not at 0 at this point
 
-//   thead lt;
-//   // fseek(fp, )
+  // thead lt;
+  // if(n < p.tupct){
+  //   fseek(fp, (p.tupct-1)*sizeof(thead)+sizeof(phead), SEEK_SET);
+  //   fread(&lt, 1, sizeof(thead), fp);
+  // }
+  if(n == p.tupct){ //just delete
+    fclose(fp);
+    return 1;
+  }
+  else if(n <= p.tupct){ //delete then move tuples and data 
+    fclose(fp);
+    return 1;
+  }
 
-//   fclose(fp);
-//   return 1;
-// }
+
+  fclose(fp);
+  return 1;
+}
 
 int main(int argc, char **argv){
   if(argc == 1){  //DEFAULT TEST CASE

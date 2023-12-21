@@ -20,9 +20,13 @@ struct tuple_header{
 
 phead PAGE_HEAD_INITIALIZER = {.tupct=-1, .ver=-1, .nfree=-1};
 
-phead head_ret(char *pname){
-  phead p = PAGE_HEAD_INITIALIZER;    //TODO: Change this to NULL
+int phead_null(phead p){
+  return p.tupct == -1 && p.ver == -1 && p.nfree == -1;
+}
 
+phead phead_ret(char *pname){
+  phead p = PAGE_HEAD_INITIALIZER;
+  
   FILE *fp;
   if((fp = fopen(pname, "r")) == NULL){
     return p;
@@ -33,7 +37,7 @@ phead head_ret(char *pname){
   return p;
 }
 
-int head_wrt(char *pname, phead *p){
+int phead_wrt(char *pname, phead *p){
   FILE *fp;
   if((fp = fopen(pname, "r+")) == NULL){
     return 1;
@@ -59,10 +63,10 @@ int page_init(char *pname){
   fclose(fp);
 
   phead p = {.tupct=0, .ver=VERSION, .nfree=PAGE_SIZE};
-  return head_wrt(pname, &p);
+  return phead_wrt(pname, &p);
 }
 
-int add(char *pname, char *fmt, void **arg) { //CHANGE NAME
+int tuple_add(char *pname, char *fmt, void **arg) {
   void *buf = NULL;
   int l = 0;
   int asize;
@@ -88,7 +92,10 @@ int add(char *pname, char *fmt, void **arg) { //CHANGE NAME
     }
   }
 
-  phead p = head_ret(pname);
+  phead p = phead_ret(pname);
+  if(phead_null(p)){
+    return 1;
+  }
   p.tupct += 1;
   p.nfree -= l;
 
@@ -104,7 +111,7 @@ int add(char *pname, char *fmt, void **arg) { //CHANGE NAME
   printf("with size %d\n", l);
 
   //write new head
-  if(head_wrt(pname, &p) == 1){ //TODO: perform all three writes or none (backup)
+  if(phead_wrt(pname, &p) == 1){ //TODO: perform all three writes or none (backup)
     return 1;
   }
 
@@ -129,10 +136,10 @@ int add(char *pname, char *fmt, void **arg) { //CHANGE NAME
   return 0;
 }
 
-int decode(char *pname, int t){
-  phead p = head_ret(pname);
-  if(p.tupct == -1 || p.ver == -1 || p.nfree == -1){
-    return 1;
+int tuple_decode(char *pname, int t){
+  phead p = phead_ret(pname);
+  if(phead_null(p)){
+    return 1; 
   }
   
   if(t > p.tupct || t <= 0){
@@ -196,19 +203,19 @@ int decode(char *pname, int t){
   return 0;
 }
 
-int removetuple(char *pname, int n){ //TODO: find loc, copy all above down until end, renumber tuple numbers, renumber db file
+int tuple_remove(char *pname, int n){ //TODO: find loc, copy all above down until end, renumber tuple numbers, renumber db file
   FILE *fp = fopen(pname, "r");
   if(fp == NULL){
     return 1;
   }
 
-  phead p;
-  fread(&p, 1, sizeof(phead), fp);
+  phead p = phead_ret(pname);
   printf("file has %d tuples\n", p.tupct);
   if(n > p.tupct || n <= 0){
     fclose(fp);
     return 1;
   }
+  
   thead t;
   fseek(fp, (n-1)*sizeof(thead)+sizeof(phead), SEEK_SET);
   fread(&t, 1, sizeof(thead), fp);
@@ -223,8 +230,8 @@ int removetuple(char *pname, int n){ //TODO: find loc, copy all above down until
 }
 
 int main(int argc, char **argv){
-  if(argc == 1){ //TODO: remove default test case
-    removetuple("test", 1);
+  if(argc == 1){  //DEFAULT TEST CASE
+    tuple_remove("test", 1);
     return 0;
   }
 
@@ -257,7 +264,7 @@ int main(int argc, char **argv){
       }
     }
 
-    add("test", argfrmt, buf);
+    tuple_add("test", argfrmt, buf);
 
     for(int i = 0; i < argc-2; i++){
       free(buf[i]);
@@ -269,7 +276,7 @@ int main(int argc, char **argv){
       printf("usage: ./a.out decode [page name] [tuple]");
       return 1;
     }
-    decode(argv[2], atoi(argv[3]));
+    tuple_decode(argv[2], atoi(argv[3]));
   }
 
   return 0;

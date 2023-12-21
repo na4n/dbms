@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DBMS Docs</title>
+</head>
+<body>
+
+<h1>DBMS</h1>
+<ul>
+  <li>a database management system</li>
+</ul>
+
+<h2>Program Outline</h2>
+<h2>Functions</h3>
+<ul>
+  <li><code>int phead_null(phead p):</code> checks if phead is null</li>
+  <li><code>phead phead_ret(char *pname):</code> returns a page header for the associated page</li>
+  <li><code>int phead_wrt(char *pname, phead *p):</code> writes the page header in the specified page</li>
+  <li><code>int page_init(char *pname):</code> creates and initializes a page with the default page header</li>
+  <li><code>int tuple_add(char *pname, char *fmt, void **arg):</code> adds a tuple to the page</li>
+  <li><code>int tuple_decode(char *pname, int t):</code> decodes tuple t on the page in pname</li>
+  <li><code>int tuple_remove(char *pname, int n):</code> removes tuple n on the page in pname</li>
+</ul>
+
+</body>
+</html>

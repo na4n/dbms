@@ -9,9 +9,10 @@
 </head>
 <body>
 
-<h1>DBMS: A Plaintext Database Management System in C</h1>
+<h1>MBDS: My Boring Data System</h1>
+<h2>A Plaintext Database Management System in C</h2>
 
-<h2>Structs</h2>
+<h3>Structs</h3>
 <code><pre>
 struct page_header{
     int tupct;
@@ -27,7 +28,7 @@ struct tuple_header{
 } typedef thead;
 </pre></code>
 
-<h2>Functions</h2>
+<h3>Functions</h3>
 <a><code>int phead_null(phead p):</code> checks if phead is null</a><br>
 <a><code>phead phead_ret(char *pname):</code> returns a page header for the associated page</a><br>
 <a><code>int phead_wrt(char *pname, phead *p):</code> writes the page header in the specified page</a><br>

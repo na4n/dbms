@@ -2,10 +2,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-//#include "page.h"
-
-
-
 const float VERSION = 0.01;
 const int TUPLE_MAX = 10;
 const int PAGE_SIZE = 4096;
@@ -24,9 +20,8 @@ struct tuple_header{
 
 phead PAGE_HEAD_INITIALIZER = {.tupct=-1, .ver=-1, .nfree=-1};
 
-
-phead gethead(char *pname){
-  phead p = PAGE_HEAD_INITIALIZER;
+phead head_ret(char *pname){
+  phead p = PAGE_HEAD_INITIALIZER;    //TODO: Change this to NULL
 
   FILE *fp;
   if((fp = fopen(pname, "r")) == NULL){
@@ -38,7 +33,7 @@ phead gethead(char *pname){
   return p;
 }
 
-int hdwrite(char *pname, phead *p){
+int head_wrt(char *pname, phead *p){
   FILE *fp;
   if((fp = fopen(pname, "r+")) == NULL){
     return 1;
@@ -49,7 +44,7 @@ int hdwrite(char *pname, phead *p){
   return 0;
 }
 
-int init(char *pname){
+int page_init(char *pname){
   FILE *fp;
   
   if((fp = fopen(pname, "r")) != NULL){
@@ -64,10 +59,10 @@ int init(char *pname){
   fclose(fp);
 
   phead p = {.tupct=0, .ver=VERSION, .nfree=PAGE_SIZE};
-  return hdwrite(pname, &p);
+  return head_wrt(pname, &p);
 }
 
-int add(char *pname, char *fmt, void **arg) {
+int add(char *pname, char *fmt, void **arg) { //CHANGE NAME
   void *buf = NULL;
   int l = 0;
   int asize;
@@ -93,8 +88,7 @@ int add(char *pname, char *fmt, void **arg) {
     }
   }
 
-
-  phead p = gethead(pname);
+  phead p = head_ret(pname);
   p.tupct += 1;
   p.nfree -= l;
 
@@ -110,7 +104,7 @@ int add(char *pname, char *fmt, void **arg) {
   printf("with size %d\n", l);
 
   //write new head
-  if(hdwrite(pname, &p) == 1){ //MEGA PROBLEM: all three writes must happen or none happen
+  if(head_wrt(pname, &p) == 1){ //TODO: perform all three writes or none (backup)
     return 1;
   }
 
@@ -135,8 +129,8 @@ int add(char *pname, char *fmt, void **arg) {
   return 0;
 }
 
-int decode(char *pname, int t){ //returns tuple t in page pname
-  phead p = gethead(pname);
+int decode(char *pname, int t){
+  phead p = head_ret(pname);
   if(p.tupct == -1 || p.ver == -1 || p.nfree == -1){
     return 1;
   }
@@ -160,11 +154,8 @@ int decode(char *pname, int t){ //returns tuple t in page pname
   char buf[th.tsize];
   fseek(fp, th.loc, SEEK_SET);
   fread(buf, th.tsize, 1, fp);
-  // char out[th.tsize+3];
-  // strcat(out, "{");
 
   int bufloc = 0;
-  // int outloc = 1;
   for(int i = 0; i < strlen(th.fmt); i++){
     if(th.fmt[i] == 'l'){
       long longch;
@@ -201,50 +192,43 @@ int decode(char *pname, int t){ //returns tuple t in page pname
       continue;
     }
   }
-  strcat(buf, "}");
 
   return 0;
 }
 
-int removetuple(char *pname, int n){  //implement this
-  return 1;
-  
-  
-  FILE *fp;
-  if((fp = fopen(pname, "r")) == NULL){
+int removetuple(char *pname, int n){ //TODO: find loc, copy all above down until end, renumber tuple numbers, renumber db file
+  FILE *fp = fopen(pname, "r");
+  if(fp == NULL){
     return 1;
   }
+
   phead p;
   fread(&p, 1, sizeof(phead), fp);
-
-  if(n > p.tupct || n < 0){
+  printf("file has %d tuples\n", p.tupct);
+  if(n > p.tupct || n <= 0){
+    fclose(fp);
     return 1;
   }
-  
-  int thead_loc = sizeof(phead) + (n-1) * sizeof(thead);
   thead t;
-  fseek(fp, thead_loc, SEEK_SET);
+  fseek(fp, (n-1)*sizeof(thead)+sizeof(phead), SEEK_SET);
   fread(&t, 1, sizeof(thead), fp);
 
-  fseek(fp, t.loc, SEEK_SET);   //delete data, rewrite others, update tuple pointers in database
-  char buf[t.tsize];
-  
+  printf("format: %s\nloc: %d\nsize: %d\n", t.fmt, t.loc, t.tsize); //FP is not at 0 at this point
+
+  thead lt;
+  // fseek(fp, )
+
   fclose(fp);
   return 1;
 }
 
-// int garbage_collect(char *pname){
-
-// }
-
 int main(int argc, char **argv){
-  if(argc == 1){ //test case
-    //decode("test", 1);
-    //decode("test", 2);
+  if(argc == 1){ //TODO: remove default test case
+    removetuple("test", 1);
     return 0;
   }
 
-  init("test");
+  page_init("test");
   
   if(strcmp(argv[1], "add") == 0){
     if(argc > TUPLE_MAX+2){
@@ -282,6 +266,7 @@ int main(int argc, char **argv){
   }
   else if(strcmp(argv[1], "decode") == 0){
     if(!(argc >= 4 && (atoi(argv[3]) != 0 || strcmp(argv[3], "0") == 0))){
+      printf("usage: ./a.out decode [page name] [tuple]");
       return 1;
     }
     decode(argv[2], atoi(argv[3]));

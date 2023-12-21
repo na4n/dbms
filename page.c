@@ -111,7 +111,7 @@ int tuple_add(char *pname, char *fmt, void **arg) {
   printf("with size %d\n", l);
 
   //write new head
-  if(phead_wrt(pname, &p) == 1){ //TODO: perform all three writes or none (backup)
+  if(phead_wrt(pname, &p) == 1){
     return 1;
   }
 

@@ -295,6 +295,10 @@ int prev_main_logic(int argc, char **argv){
   return 0;
 }
 
+int db_add_tuple(char *dname, void **buf){//find open page add tuple
+  //also introduce indexes to 
+}
+
 int create_db(char *dname, char *fmt){
   FILE *dir_fp;
   FILE *mtda_fp;
@@ -311,22 +315,16 @@ int create_db(char *dname, char *fmt){
   strcat(dname_dir, dname);
   strcat(dname_dir, ".dir");
 
-  printf("dname metadata: %s\n", dname_meatadata);
-  printf("dname dir: %s\n", dname_dir);
-
   if((dir_fp = fopen(dname_dir, "r")) != NULL){
     fclose(dir_fp);
     return 1;
   }
 
-  printf("testing format\n");
   for(int i = 0; i < strlen(fmt); i++){
     if(!(fmt[i] == 's' || fmt[i] == 'l' || fmt[i] == 'f')){
-      printf("failing character '%c' at %d\n", fmt[i], i);
       return 1;
     }
   }
-  printf("done testing format\n");
 
   dir_fp = fopen(dname_dir, "w");
   mtda_fp = fopen(dname_meatadata, "w");

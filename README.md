@@ -1,4 +1,4 @@
-# DBMS: Delightfully Boring Management System
+# DBMS: Delightfully Basic Management System
 - A *Simple* Database Management System in C
 
 # DOCS

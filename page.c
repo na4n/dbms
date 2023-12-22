@@ -241,7 +241,7 @@ int tuple_remove(char *pname, int n){
   return 1;
 }
 
-int main(int argc, char **argv){
+int prev_main_logic(int argc, char **argv){
   if(argc == 1){  //DEFAULT TEST CASE
     //tuple_remove("test", 1);
     tuple_decode("test", 1);
@@ -293,4 +293,66 @@ int main(int argc, char **argv){
   }
 
   return 0;
+}
+
+int create_db(char *dname, char *fmt){
+  FILE *dir_fp;
+  FILE *mtda_fp;
+
+  int dmtd_len = strlen(dname)+strlen(".metadata")+1;
+  int ddir_len = strlen(dname)+strlen(".dir")+1;
+  char dname_meatadata[dmtd_len];
+  char dname_dir[ddir_len];
+  bzero(dname_meatadata, ddir_len);
+  bzero(dname_dir, dmtd_len);
+
+  strcat(dname_meatadata, dname);
+  strcat(dname_meatadata, ".metadata");
+  strcat(dname_dir, dname);
+  strcat(dname_dir, ".dir");
+
+  printf("dname metadata: %s\n", dname_meatadata);
+  printf("dname dir: %s\n", dname_dir);
+
+  if((dir_fp = fopen(dname_dir, "r")) != NULL){
+    fclose(dir_fp);
+    return 1;
+  }
+
+  printf("testing format\n");
+  for(int i = 0; i < strlen(fmt); i++){
+    if(!(fmt[i] == 's' || fmt[i] == 'l' || fmt[i] == 'f')){
+      printf("failing character '%c' at %d\n", fmt[i], i);
+      return 1;
+    }
+  }
+  printf("done testing format\n");
+
+  dir_fp = fopen(dname_dir, "w");
+  mtda_fp = fopen(dname_meatadata, "w");
+
+  if(!(dir_fp == NULL && mtda_fp == NULL) && dir_fp == NULL || mtda_fp == NULL){
+    if(dir_fp == NULL){
+      fclose(mtda_fp);
+    }
+    else{
+      fclose(dir_fp);
+    }
+  }
+  if(dir_fp == NULL && mtda_fp == NULL){
+    return 1;
+  }
+
+  fwrite(fmt, sizeof(char), strlen(fmt), mtda_fp);
+
+  fclose(dir_fp);
+  fclose(mtda_fp);
+
+  return 0;
+}
+
+int main(int argc, char **argv){
+  create_db("testdname", "sslfs");
+  return 1; 
+  // prev_main_logic(argc, argv);
 }

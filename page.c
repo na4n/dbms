@@ -345,6 +345,10 @@ int create_db(char *dname, char *fmt){
 
   fwrite(fmt, sizeof(char), strlen(fmt), mtda_fp);
 
+
+//so far func makes files if they don't exist and writes format out to dname_metadata
+//need to implement table addition methods and page accessing, but those might be different methods
+
   fclose(dir_fp);
   fclose(mtda_fp);
 

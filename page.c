@@ -107,10 +107,7 @@ int tuple_add(char *pname, char *fmt, void **arg) {
     printf("page is full\n");
     return 2;
   }
-
-  // printf("adding %s ", fmt);
-  // printf("with size %d\n", l);
-
+  
   if(phead_wrt(pname, &p) == 1){
     return 1;
   }

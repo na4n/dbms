@@ -297,6 +297,7 @@ int prev_main_logic(int argc, char **argv){
 
 int db_add_tuple(char *dname, void **buf){//find open page add tuple
   //also introduce indexes to 
+  return 1;
 }
 
 int create_db(char *dname, char *fmt){

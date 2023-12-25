@@ -18,6 +18,11 @@ struct tuple_header{
   short loc;
 } typedef thead;
 
+// struct garbage_header{
+//   unsigned char tuplen;
+//   int foffset;
+// }
+
 phead PAGE_HEAD_INITIALIZER = {.tupct=-1, .ver=-1, .nfreedat=-1, .nfreetup=-1};
 
 int phead_null(phead p){
@@ -199,6 +204,23 @@ int tuple_decode(char *pname, int t, char *fmt){
   return 0;
 }
 
+int gbc_removed_tuple(char *pname, int n, int n_loc){ //garbage collect immediately after delete
+  FILE *fp;
+  if((fp = fopen(pname, "r+")) == NULL){
+    return 1;
+  }
+
+  phead p = phead_ret(pname);
+  if(n > p.tupct || n <= 0){
+    printf("should have been caught by tuple remove\n");
+    return 1;
+  }
+
+  
+  fclose(fp);
+  return 1;
+}
+
 int tuple_remove(char *pname, int n){
   FILE *fp = fopen(pname, "r+");
   if(fp == NULL){
@@ -237,9 +259,11 @@ int tuple_remove(char *pname, int n){
   }
   fclose(fp);
 
-  FILE *garbage = fopen(".garbage", "a+");
-  fwrite(&n, sizeof(int), 1, garbage);
-  fclose(garbage);
+  // FILE *garbage = fopen(".garbage", "a+");
+  // fwrite(&n, sizeof(int), 1, garbage);
+  // fclose(garbage);
+
+  //garbage collect, then rewrite head
 
   return 0;
 }

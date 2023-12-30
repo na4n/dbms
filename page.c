@@ -204,7 +204,7 @@ int tuple_decode(char *pname, int t, char *fmt){
   return 0;
 }
 
-int gbc_removed_tuple(char *pname, int n, int n_loc){ //garbage collect immediately after delete
+int gbc_removed_tuple(char *pname, int n, int n_loc){
   FILE *fp;
   if((fp = fopen(pname, "r+")) == NULL){
     return 1;
@@ -216,7 +216,29 @@ int gbc_removed_tuple(char *pname, int n, int n_loc){ //garbage collect immediat
     return 1;
   }
 
-  
+  if(n == p.tupct){
+    printf("nothing to change, tuple removed is last tuple stored in file");
+    return 0;
+  }
+  else if(n < p.tupct){
+    thead th;
+    fseek(fp, sizeof(phead)+sizeof(thead)*(n-1), SEEK_SET);
+    fread(&th, sizeof(thead), 1, fp);
+
+    int last_data_loc = th.loc;
+
+    char buf[sizeof(thead) * (p.tupct-n)];
+    
+    fseek(fp, sizeof(phead)+sizeof(thead)*n, SEEK_SET);
+    fread(buf, 1, sizeof(thead)*(p.tupct-n), fp);
+    
+    fseek(fp, sizeof(phead)+sizeof(thead)*(n-1), SEEK_SET);
+    fwrite(buf, 1, sizeof(thead)*(p.tupct-n), fp);
+
+
+
+  }
+
   fclose(fp);
   return 1;
 }

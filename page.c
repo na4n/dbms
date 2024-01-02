@@ -244,9 +244,43 @@ int tuple_remove(char *pname, int n){
   return 0;
 }
 
+int debug_tuple(char *pname, int n, char *fmt){
+  return 1;
+}
+
+int debug_page(char *pname){
+  FILE *fp;
+  if((fp = fopen(pname, "r")) == NULL){
+    return 1;
+  }
+
+  phead p = phead_ret(pname);
+  printf("Page Header\n");
+  printf("\tTuple Count: %d\n", p.tupct);
+  printf("\tVersion: %f\n", p.ver);
+  printf("\tNext Free Data Location: %d\n", p.nfreedat);
+  printf("\tNext Free Tuple Location: %d\n", p.nfreetup);
+
+  thead th;
+  for(int i = 1; i <= p.tupct; i++){
+    fseek(fp, sizeof(phead)+sizeof(thead)*(i-1), SEEK_SET);
+    fread(&th, sizeof(thead), 1, fp);
+    printf("Tuple %d\n", i);
+    printf("\tLocation: %d\n", th.loc);
+    printf("\tSize: %d\n", th.size);
+    fseek(fp, th.loc, SEEK_SET);
+    char buf[th.size];
+    fread(buf, 1, th.size, fp);
+  }
+
+  fclose(fp);
+  return 0;
+}
+
 int main(int argc, char **argv){
   if(argc == 1){  //DEFAULT TEST CASE
-    tuple_remove("test", 1);
+    //tuple_remove("test", 1);
+    debug_page("test");
     return 0;
   }
 

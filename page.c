@@ -330,6 +330,13 @@ int main(int argc, char **argv){
     }
     tuple_decode(argv[2], atoi(argv[3]), "quick");
   }
+  else if(strcmp(argv[1], "debug") == 0){
+    if(argc < 3){
+      printf("Usage: ./a.out debug page_name");
+      return 1;
+    }
+    debug_page(argv[2]);
+  }
 
   return 0;
 }

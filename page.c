@@ -220,7 +220,7 @@ int gbc_removed_tuple(char *pname, int n, int n_loc){
     printf("nothing to change, tuple removed is last tuple stored in file");
     return 0;
   }
-  else if(n < p.tupct){
+  else if(n < p.tupct){ //move all tuples and tuple headers down
     thead th;
     fseek(fp, sizeof(phead)+sizeof(thead)*(n-1), SEEK_SET);
     fread(&th, sizeof(thead), 1, fp);
@@ -238,6 +238,8 @@ int gbc_removed_tuple(char *pname, int n, int n_loc){
 
 
   }
+
+  //write head with one less tuple
 
   fclose(fp);
   return 1;

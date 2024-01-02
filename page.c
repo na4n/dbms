@@ -205,6 +205,8 @@ int tuple_decode(char *pname, int t, char *fmt){
 }
 
 int gbc_removed_tuple(char *pname, int n, int delsize){
+  return 1; //remove this
+  
   FILE *fp;
   if((fp = fopen(pname, "r+")) == NULL){
     return 1;
@@ -221,47 +223,10 @@ int gbc_removed_tuple(char *pname, int n, int delsize){
     printf("no change necessary");
     return 0;
   }
-  else if(n < p.tupct){ //move all tuples and tuple headers down
-    thead th1;
-    thead th2;
-
-    fseek(fp, sizeof(phead)+sizeof(thead)*(n-1), SEEK_SET);
-    fread(&th1, sizeof(thead), 1, fp);
-    fseek(fp, sizeof(phead)+sizeof(thead)*(p.tupct-1), SEEK_SET);
-    fread(&th2, sizeof(thead), 1, fp);
-
-    if(th1.loc >= th2.loc){
-      fclose(fp);
-      return 1;
-    }
-
-    int cpysz = th2.loc-th1.loc;
-    char datbuf[cpysz];
-    fseek(fp, th2.loc, SEEK_SET);
-    fread(datbuf, 1, cpysz, fp);
-    fseek(fp, th2.loc+delsize, SEEK_SET);
-    fwrite(datbuf, 1, cpysz, fp);
-
-    char b = '\0';
-    fseek(fp, th2.loc, SEEK_SET);
-    for(int i = 0; i < delsize; i++){
-      fwrite(&b, 1, 1, fp);
-    }
-
-    int tupnum = p.tupct-n;
-    fseek(fp, sizeof(phead)+sizeof(thead)*(n), SEEK_SET);
-    char tupbuf[tupnum*sizeof(thead)];
-    fread(tupbuf, sizeof(thead), tupnum, fp);
-    
-    fseek(fp, sizeof(phead)+sizeof(thead)*(n-1), SEEK_SET);
-    fwrite(tupbuf, sizeof(thead), tupnum, fp);
-    
-    fseek(fp, sizeof(phead)+sizeof(thead)*(p.tupct-1), SEEK_SET);
-    for(int i = 0; i < sizeof(thead); i++){
-      fwrite(&b, 1, 1, fp);
-    }
-  }
-
+  
+  //move all tuple headers up, change all tuple locs to += delsize
+  
+  //move all tuples down by delsize --> one shot
   fclose(fp);
   return 1;
 }
@@ -347,7 +312,8 @@ int debug_page(char *pname){
 int main(int argc, char **argv){
   if(argc == 1){  //DEFAULT TEST CASE
     //tuple_remove("test", 1);
-    debug_page("test");
+    // debug_page("test");
+    tuple_remove("test", 2);
     return 0;
   }
 
@@ -387,15 +353,15 @@ int main(int argc, char **argv){
     }
     free(buf);
 
-    tuple_decode("test", 1, argfrmt);
-    tuple_decode("test", 2, argfrmt);
+    // tuple_decode("test", 1, argfrmt);
+    // tuple_decode("test", 2, argfrmt);
   }
   else if(strcmp(argv[1], "decode") == 0){
     if(!(argc >= 4 && (atoi(argv[3]) != 0 || strcmp(argv[3], "0") == 0))){
       printf("usage: ./a.out decode [page name] [tuple]");
       return 1;
     }
-    tuple_decode(argv[2], atoi(argv[3]), "quick");
+    tuple_decode(argv[2], atoi(argv[3]), "s");
   }
   else if(strcmp(argv[1], "debug") == 0){
     if(argc < 3){

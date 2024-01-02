@@ -204,7 +204,7 @@ int tuple_decode(char *pname, int t, char *fmt){
   return 0;
 }
 
-int gbc_removed_tuple(char *pname, int n, int n_loc){
+int gbc_removed_tuple(char *pname, int n, int delsize){
   FILE *fp;
   if((fp = fopen(pname, "r+")) == NULL){
     return 1;
@@ -212,34 +212,55 @@ int gbc_removed_tuple(char *pname, int n, int n_loc){
 
   phead p = phead_ret(pname);
   if(n > p.tupct || n <= 0){
-    printf("should have been caught by tuple remove\n");
+    fclose(fp);
+    printf("invalid tuple number\n");
     return 1;
   }
 
   if(n == p.tupct){
-    printf("nothing to change, tuple removed is last tuple stored in file");
+    printf("no change necessary");
     return 0;
   }
   else if(n < p.tupct){ //move all tuples and tuple headers down
-    thead th;
+    thead th1;
+    thead th2;
+
     fseek(fp, sizeof(phead)+sizeof(thead)*(n-1), SEEK_SET);
-    fread(&th, sizeof(thead), 1, fp);
+    fread(&th1, sizeof(thead), 1, fp);
+    fseek(fp, sizeof(phead)+sizeof(thead)*(p.tupct-1), SEEK_SET);
+    fread(&th2, sizeof(thead), 1, fp);
 
-    int last_data_loc = th.loc;
+    if(th1.loc >= th2.loc){
+      fclose(fp);
+      return 1;
+    }
 
-    char buf[sizeof(thead) * (p.tupct-n)];
-    
-    fseek(fp, sizeof(phead)+sizeof(thead)*n, SEEK_SET);
-    fread(buf, 1, sizeof(thead)*(p.tupct-n), fp);
+    int cpysz = th2.loc-th1.loc;
+    char datbuf[cpysz];
+    fseek(fp, th2.loc, SEEK_SET);
+    fread(datbuf, 1, cpysz, fp);
+    fseek(fp, th2.loc+delsize, SEEK_SET);
+    fwrite(datbuf, 1, cpysz, fp);
+
+    char b = '\0';
+    fseek(fp, th2.loc, SEEK_SET);
+    for(int i = 0; i < delsize; i++){
+      fwrite(&b, 1, 1, fp);
+    }
+
+    int tupnum = p.tupct-n;
+    fseek(fp, sizeof(phead)+sizeof(thead)*(n), SEEK_SET);
+    char tupbuf[tupnum*sizeof(thead)];
+    fread(tupbuf, sizeof(thead), tupnum, fp);
     
     fseek(fp, sizeof(phead)+sizeof(thead)*(n-1), SEEK_SET);
-    fwrite(buf, 1, sizeof(thead)*(p.tupct-n), fp);
-
-
-
+    fwrite(tupbuf, sizeof(thead), tupnum, fp);
+    
+    fseek(fp, sizeof(phead)+sizeof(thead)*(p.tupct-1), SEEK_SET);
+    for(int i = 0; i < sizeof(thead); i++){
+      fwrite(&b, 1, 1, fp);
+    }
   }
-
-  //write head with one less tuple
 
   fclose(fp);
   return 1;
@@ -266,29 +287,27 @@ int tuple_remove(char *pname, int n){
   int t_loc = th.loc;
   fseek(fp, t_loc, SEEK_SET);
   char b = '\0';
-  long s;
   
   for(int i = 0; i < th.size; i++){
-    s = fwrite(&b, 1, 1, fp);
-    if(s == 0){
-      printf("something is going wrong\n");
+    if(fwrite(&b, 1, 1, fp) == 0){
+      printf("tuple removal (null overwrite) is failing");
     }
   }
+
   fseek(fp, th_loc, SEEK_SET);
   for(int i = 0; i < sizeof(thead); i++){
-    s = fwrite(&b, 1, 1, fp);
-    if(s == 0){
-      printf("something is going wrong\n");
+    if(fwrite(&b, 1, 1, fp) == 0){
+      printf("tuple removal (null overwrite) is failing");
     }
   }
+  
+  gbc_removed_tuple(pname, n, th.size);
+  p.tupct -= 1;
+  p.nfreetup = sizeof(phead) + (p.tupct) * sizeof(thead);
+  p.nfreedat -= th.size;
+  phead_wrt(pname, &p);
+
   fclose(fp);
-
-  // FILE *garbage = fopen(".garbage", "a+");
-  // fwrite(&n, sizeof(int), 1, garbage);
-  // fclose(garbage);
-
-  //garbage collect, then rewrite head
-
   return 0;
 }
 

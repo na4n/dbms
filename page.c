@@ -23,6 +23,8 @@ struct tuple_header{
 //   int foffset;
 // }
 
+int debug_page(char *pname);
+
 phead PAGE_HEAD_INITIALIZER = {.tupct=-1, .ver=-1, .nfreedat=-1, .nfreetup=-1};
 
 int phead_null(phead p){
@@ -204,9 +206,7 @@ int tuple_decode(char *pname, int t, char *fmt){
   return 0;
 }
 
-int gbc_removed_tuple(char *pname, int n, int delsize){
-  return 1; //remove this
-  
+int gbc_removed_tuple(char *pname, int n, int delsize){  
   FILE *fp;
   if((fp = fopen(pname, "r+")) == NULL){
     return 1;
@@ -224,11 +224,41 @@ int gbc_removed_tuple(char *pname, int n, int delsize){
     return 0;
   }
   
-  //move all tuple headers up, change all tuple locs to += delsize
+  int datend;
+  int datstart = p.nfreedat;
+  thead currth;
+  fseek(fp, sizeof(phead)+sizeof(thead)*(n), SEEK_SET);
+  fread(&currth, sizeof(thead), 1, fp);
+  datend = currth.loc+currth.size;
   
-  //move all tuples down by delsize --> one shot
+  for(int i = 0; i < p.tupct-n; i++){ //
+    fseek(fp, sizeof(phead)+sizeof(thead)*(n+i), SEEK_SET);
+    fread(&currth, sizeof(thead), 1, fp);
+    currth.loc += delsize;
+    fseek(fp, sizeof(phead)+sizeof(thead)*(n+i-1), SEEK_SET);
+    fwrite(&currth, sizeof(thead), 1, fp);
+  }
+
+  fseek(fp, sizeof(phead)+sizeof(thead)*(p.tupct-1), SEEK_SET);
+  char b = '\0';
+  for(int i = 0; i < sizeof(thead); i++){
+    fwrite(&b, 1, 1, fp);
+  }
+
+  char buf[datend-datstart];
+  fseek(fp, p.nfreedat, SEEK_SET);
+  fread(buf, 1, datend-datstart, fp);
+  
+  fseek(fp, p.nfreedat+delsize, SEEK_SET);
+  fwrite(buf, 1, datend-datstart, fp);
+  
+  fseek(fp, p.nfreedat, SEEK_SET);
+  for(int i = 0; i < delsize; i++){
+    fwrite(&b, 1, 1, fp);
+  }
+
   fclose(fp);
-  return 1;
+  return 0;
 }
 
 int tuple_remove(char *pname, int n){
@@ -265,14 +295,14 @@ int tuple_remove(char *pname, int n){
       printf("tuple removal (null overwrite) is failing");
     }
   }
-  
+  fclose(fp);
+
   gbc_removed_tuple(pname, n, th.size);
   p.tupct -= 1;
   p.nfreetup = sizeof(phead) + (p.tupct) * sizeof(thead);
-  p.nfreedat -= th.size;
+  p.nfreedat += th.size;
   phead_wrt(pname, &p);
 
-  fclose(fp);
   return 0;
 }
 
@@ -300,9 +330,9 @@ int debug_page(char *pname){
     printf("Tuple %d\n", i);
     printf("\tLocation: %d\n", th.loc);
     printf("\tSize: %d\n", th.size);
-    fseek(fp, th.loc, SEEK_SET);
-    char buf[th.size];
-    fread(buf, 1, th.size, fp);
+    // fseek(fp, th.loc, SEEK_SET);
+    // char buf[th.size];
+    // fread(buf, 1, th.size, fp);
   }
 
   fclose(fp);
@@ -310,9 +340,8 @@ int debug_page(char *pname){
 }
 
 int main(int argc, char **argv){
+
   if(argc == 1){  //DEFAULT TEST CASE
-    //tuple_remove("test", 1);
-    // debug_page("test");
     tuple_remove("test", 2);
     return 0;
   }
@@ -352,16 +381,13 @@ int main(int argc, char **argv){
       free(buf[i]);
     }
     free(buf);
-
-    // tuple_decode("test", 1, argfrmt);
-    // tuple_decode("test", 2, argfrmt);
   }
   else if(strcmp(argv[1], "decode") == 0){
     if(!(argc >= 4 && (atoi(argv[3]) != 0 || strcmp(argv[3], "0") == 0))){
       printf("usage: ./a.out decode [page name] [tuple]");
       return 1;
     }
-    tuple_decode(argv[2], atoi(argv[3]), "s");
+    tuple_decode(argv[2], atoi(argv[3]), "s");    //decode formatter is set to a single string
   }
   else if(strcmp(argv[1], "debug") == 0){
     if(argc < 3){

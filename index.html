@@ -13,34 +13,59 @@
 <h2 style="text-align: center;">A Database Management System in C</h2>
 
 <h2>Synopsis</h2>
-<a>This is a synopsis of the project</a>
-<br><br>
+<a>DBMS is a relational database using heapfiles to store rows.</a><br>
+<a>Current development work is focused on table support.</a><br>
+<!-- <br> -->
 
-<h2>Documentation</h2>
-<h3>Structs</h3>
+<h2>Table of Contents</h2>
+<ul>
+    <li><a href="#ftdev">Feature Development</a></li>
+    <li><a href="#doc">Documentation</a>
+        <ul>
+            <li><a href="#page">page.c</a>
+                <ul>
+                    <li><a href="#pgstrct">Structs</a></li>
+                    <li><a href="#pgfnc">Functions</a></li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+</ul>
+
+
+<h2 id="ftdev">Feature Development</h2>
+<ul>
+    <li>Tables with rows linked to pages</li>
+    <li>SQL parser (development stalled because it's C)</li>
+</ul>
+
+
+<h2 id="doc">Documentation</h2>
+<h3 id="page">page.c</h3>
+<h4 id="pgstrct">Structs</h4>
 <code><pre>
 struct page_header{
-    int tupct;
-    float ver;
-    int nfree;
+    int tupct;              //tuple count
+    float ver;              //version number
+    int nfreedat;           //next free data location
+    int nfreetup;           //next free tuple location
 } typedef phead
 </pre></code><br>
 <code><pre>
 struct tuple_header{
-    char fmt[10];
-    int loc;
-    int tsize;
+    unsigned char size;     //size of tuple in bytes
+    short loc;              //tuple location (as offset)
 } typedef thead;
 </pre></code>
 
-<h3>Functions</h3>
-<a><code>int phead_null(phead p):</code> checks if phead is null</a><br>
-<a><code>phead phead_ret(char *pname):</code> returns a page header for the associated page</a><br>
-<a><code>int phead_wrt(char *pname, phead *p):</code> writes the page header in the specified page</a><br>
-<a><code>int page_init(char *pname):</code> creates and initializes a page with the default page header</a><br>
-<a><code>int tuple_add(char *pname, char *fmt, void **arg):</code> adds a tuple to the page</a><br>
-<a><code>int tuple_decode(char *pname, int t):</code> decodes tuple t on the page in pname</a><br>
-<a><code>int tuple_remove(char *pname, int n):</code> removes tuple n on the page in pname</a><br>
+<h4 id="pgfnc">Functions</h4>
+<code><pre>int phead_null(phead p);                             //checks if a page header p is null</pre></code>
+<code><pre>phead phead_ret(char *pname);                        //retrieves the page header from a page pname</pre></code>
+<code><pre>int phead_wrt(char *pname, phead *p);                //writes the page header p to a page pname</pre></code>
+<code><pre>int page_init(char *pname);                          //initializes a page pname</pre></code>
+<code><pre>int tuple_add(char *pname, char *fmt, void **arg);   //adds tuple arg with format fmt to page pname</pre></code>
+<code><pre>int tuple_decode(char *pname, int t);                //decodes tuple t on page pname</pre></code>
+<code><pre>int tuple_remove(char *pname, int n);                //removes tuple n on page pname</pre></code>
 
 </body>
 </html>

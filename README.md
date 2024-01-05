@@ -15,7 +15,7 @@
 
 # Contact Information
 - Contact me at the following email
-- [![Firefox Relay Alias](/assets/email.png "No spam please")]
+[![Firefox Relay Alias](/assets/email.png "No spam please")]
 
 # Documentation
 - Documentation for current development work is on Github Pages: [https://na4n.github.io/dbms/](https://na4n.github.io/dbms/)

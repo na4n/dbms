@@ -23,8 +23,6 @@ struct tuple_header{
 //   int foffset;
 // }
 
-int debug_page(char *pname);
-
 phead PAGE_HEAD_INITIALIZER = {.tupct=-1, .ver=-1, .nfreedat=-1, .nfreetup=-1};
 
 int phead_null(phead p){

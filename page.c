@@ -6,14 +6,14 @@ const float VERSION = 0.01;
 const int TUPLE_MAX = 10;
 const int PAGE_SIZE = 4096;
 
-struct page_header{
+struct __attribute__((packed)) page_header{
   int tupct;
   float ver;
   int nfreedat;
   int nfreetup;
 } typedef phead;
 
-struct tuple_header{
+struct __attribute__((packed)) tuple_header{
   unsigned char size;
   short loc;
 } typedef thead;

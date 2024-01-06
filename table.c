@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-struct table_entry{
+struct __attribute__((packed)) table_entry{
   char *fmt;
   int pnum;
   short tnum;

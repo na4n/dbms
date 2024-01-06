@@ -6,6 +6,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DBMS Docs</title>
+
+    <link rel="stylesheet" href="highlight/styles/vs.css">
+    <script src="highlight/highlight.min.js"></script>
+    
+    <script>hljs.highlightAll();</script>
+    
 </head>
 <body>
 
@@ -43,29 +49,27 @@
 <h2 id="doc">Documentation</h2>
 <h3 id="page">page.c</h3>
 <h4 id="pgstrct">Structs</h4>
-<code><pre>
-struct page_header{
+<pre><code class="language-c">struct page_header{
     int tupct;              //tuple count
     float ver;              //version number
     int nfreedat;           //next free data location
     int nfreetup;           //next free tuple location
 } typedef phead
-</pre></code><br>
-<code><pre>
-struct tuple_header{
+</code></pre>
+<pre><code class="language-c">struct tuple_header{
     unsigned char size;     //size of tuple in bytes
     short loc;              //tuple location (as offset)
 } typedef thead;
-</pre></code>
+</code></pre>
 
 <h4 id="pgfnc">Functions</h4>
-<code><pre>int phead_null(phead p);                             //checks if a page header p is null</pre></code>
-<code><pre>phead phead_ret(char *pname);                        //retrieves the page header from a page pname</pre></code>
-<code><pre>int phead_wrt(char *pname, phead *p);                //writes the page header p to a page pname</pre></code>
-<code><pre>int page_init(char *pname);                          //initializes a page pname</pre></code>
-<code><pre>int tuple_add(char *pname, char *fmt, void **arg);   //adds tuple arg with format fmt to page pname</pre></code>
-<code><pre>int tuple_decode(char *pname, int t);                //decodes tuple t on page pname</pre></code>
-<code><pre>int tuple_remove(char *pname, int n);                //removes tuple n on page pname</pre></code>
+<pre><code class="language-c">int phead_null(phead p);                             //checks if a page header p is null</code></pre>
+<pre><code class="language-c">phead phead_ret(char *pname);                        //retrieves the page header from a page pname</code></pre>
+<pre><code class="language-c">int phead_wrt(char *pname, phead *p);                //writes the page header p to a page pname</code></pre>
+<pre><code class="language-c">int page_init(char *pname);                          //initializes a page pname</code></pre>
+<pre><code class="language-c">int tuple_add(char *pname, char *fmt, void **arg);   //adds tuple arg with format fmt to page pname</code></pre>
+<pre><code class="language-c">int tuple_decode(char *pname, int t);                //decodes tuple t on page pname</code></pre>
+<pre><code class="language-c">int tuple_remove(char *pname, int n);                //removes tuple n on page pname</code></pre>
 
 </body>
 </html>

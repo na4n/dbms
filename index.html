@@ -63,14 +63,15 @@
 </code></pre>
 
 <h4 id="pgfnc">Functions</h4>
-<pre><code class="language-c">int phead_null(phead p);                             //checks if a page header p is null</code></pre>
-<pre><code class="language-c">phead phead_ret(char *pname);                        //retrieves the page header from a page pname</code></pre>
-<pre><code class="language-c">int phead_wrt(char *pname, phead *p);                //writes the page header p to a page pname</code></pre>
-<pre><code class="language-c">int page_init(char *pname);                          //initializes a page pname</code></pre>
-<pre><code class="language-c">int tuple_add(char *pname, char *fmt, void **arg);   //adds tuple arg with format fmt to page pname</code></pre>
-<pre><code class="language-c">int tuple_decode(char *pname, int t);                //decodes tuple t on page pname</code></pre>
-<pre><code class="language-c">int tuple_remove(char *pname, int n);                //removes tuple n on page pname</code></pre>
-
+<pre><code class="language-c">int phead_null(phead p);                             //checks if a page header p is null
+phead phead_ret(char *pname);                        //retrieves the page header from a page pname
+int phead_wrt(char *pname, phead *p);                //writes the page header p to a page pname
+int page_init(char *pname);                          //initializes a page pname
+int tuple_add(char *pname, char *fmt, void **arg);   //adds tuple arg with format fmt to page pname
+int tuple_decode(char *pname, int t);                //decodes tuple t on page pname
+int tuple_remove(char *pname, int n);                //removes tuple n on page pname
+</code></pre>
+    
 </body>
 </html>
 

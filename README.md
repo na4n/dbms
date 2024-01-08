@@ -1,4 +1,4 @@
-# Database Management System
+# DBMS: A Disk-Based Short Lived Database Management System
 - A relational database management system (dbms) made from scratch in C. Currently strings, floats, and ints can be added throught the command line.
 - The dbms uses heapfile pages where each row is stored as a tuple in a given page and is accessible by accessing an offset within that page.
 - Support for tables, i.e. the ability to group and track tuples is being added
